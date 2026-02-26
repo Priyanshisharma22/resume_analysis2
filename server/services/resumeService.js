@@ -1,7 +1,7 @@
 // Uses Google Gemini API for AI inference (free tier available)
 // Get your free API key at: https://aistudio.google.com/app/apikey
 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
 
 async function callGemini(prompt) {
   const apiKey = process.env.GEMINI_API_KEY;
