@@ -1,4 +1,4 @@
-const pdfParse = require('pdf-parse');
+const { PdfReader } = require('pdfreader');
 
 /**
  * Extracts plain text from a PDF buffer
@@ -6,12 +6,26 @@ const pdfParse = require('pdf-parse');
  * @returns {Promise<string>} - Extracted text
  */
 async function extractText(buffer) {
-  try {
-    const data = await pdfParse(buffer);
-    return data.text.trim();
-  } catch (err) {
-    throw new Error('Failed to parse PDF: ' + err.message);
-  }
+  return new Promise((resolve, reject) => {
+    const rows = {};
+    new PdfReader().parseBuffer(buffer, (err, item) => {
+      if (err) {
+        reject(new Error('Failed to parse PDF: ' + err.message));
+      } else if (!item) {
+        // End of file - join all rows
+        const text = Object.keys(rows)
+          .sort((a, b) => a - b)
+          .map(y => rows[y].join(' '))
+          .join('\n')
+          .trim();
+        resolve(text);
+      } else if (item.text) {
+        const y = item.y;
+        if (!rows[y]) rows[y] = [];
+        rows[y].push(item.text);
+      }
+    });
+  });
 }
 
 module.exports = { extractText };
