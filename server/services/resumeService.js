@@ -12,7 +12,7 @@ async function callGemini(prompt) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 3000 },
+      generationConfig: { temperature: 0.2, maxOutputTokens: 1000 },
     }),
   });
 
@@ -42,65 +42,16 @@ async function callGemini(prompt) {
 }
 
 async function analyzeResume(resumeText) {
-  const prompt = `You are an expert resume analyst. Analyze the resume below and respond ONLY with a valid JSON object. No explanation, no markdown, no text before or after the JSON.
+  // Truncate resume to max 2000 chars to save tokens
+  const truncatedResume = resumeText.slice(0, 2000);
 
-Required JSON structure:
-{
-  "candidate": {
-    "name": "full name or Unknown",
-    "email": "email or null",
-    "phone": "phone or null",
-    "location": "city/country or null",
-    "linkedIn": "url or null",
-    "summary": "2-3 sentence professional summary"
-  },
-  "skills": {
-    "technical": ["skill1", "skill2"],
-    "soft": ["skill1", "skill2"],
-    "languages": ["language1"],
-    "tools": ["tool1", "tool2"]
-  },
-  "experience": [
-    {
-      "company": "company name",
-      "role": "job title",
-      "duration": "e.g. 2021-2023",
-      "highlights": ["achievement1", "achievement2"]
-    }
-  ],
-  "education": [
-    {
-      "institution": "school name",
-      "degree": "degree name",
-      "year": "graduation year or null"
-    }
-  ],
-  "score": {
-    "overall": 75,
-    "breakdown": {
-      "formatting": 70,
-      "impact": 65,
-      "skills": 80,
-      "experience": 75,
-      "education": 70
-    },
-    "grade": "B+"
-  },
-  "strengths": ["strength1", "strength2", "strength3"],
-  "improvements": [
-    {
-      "category": "category name",
-      "issue": "specific problem",
-      "suggestion": "actionable fix",
-      "priority": "high"
-    }
-  ],
-  "keywords": ["keyword1", "keyword2"],
-  "missingKeywords": ["missing1", "missing2"]
-}
+  const prompt = `Analyze this resume. Respond ONLY with a valid JSON object, no extra text.
+
+JSON structure:
+{"candidate":{"name":"string","email":"string or null","phone":"string or null","location":"string or null","linkedIn":"string or null","summary":"string"},"skills":{"technical":[],"soft":[],"languages":[],"tools":[]},"experience":[{"company":"string","role":"string","duration":"string","highlights":[]}],"education":[{"institution":"string","degree":"string","year":"string or null"}],"score":{"overall":75,"breakdown":{"formatting":70,"impact":65,"skills":80,"experience":75,"education":70},"grade":"B+"},"strengths":[],"improvements":[{"category":"string","issue":"string","suggestion":"string","priority":"high"}],"keywords":[],"missingKeywords":[]}
 
 RESUME:
-${resumeText}
+${truncatedResume}
 
 JSON:`;
 
@@ -108,45 +59,20 @@ JSON:`;
 }
 
 async function matchJobDescription(resumeText, jobDescription) {
-  const prompt = `You are an ATS specialist. Compare the resume to the job description and respond ONLY with a valid JSON object. No explanation, no markdown, no text before or after the JSON.
+  // Truncate to save tokens
+  const truncatedResume = resumeText.slice(0, 1500);
+  const truncatedJob = jobDescription.slice(0, 1000);
 
-Required JSON structure:
-{
-  "matchScore": 72,
-  "matchGrade": "B",
-  "verdict": "One sentence summary of the match quality",
-  "matchedKeywords": ["keyword1", "keyword2"],
-  "missingKeywords": ["missing1", "missing2"],
-  "matchedRequirements": [
-    {
-      "requirement": "requirement from job description",
-      "evidence": "how the resume satisfies it"
-    }
-  ],
-  "missingRequirements": [
-    {
-      "requirement": "requirement from job description",
-      "gap": "what is missing",
-      "howToAddress": "suggestion to close the gap"
-    }
-  ],
-  "tailoringTips": [
-    {
-      "section": "Summary",
-      "tip": "specific advice for this section"
-    }
-  ],
-  "atsOptimization": {
-    "score": 65,
-    "tips": ["tip1", "tip2"]
-  }
-}
+  const prompt = `Compare this resume to the job description. Respond ONLY with a valid JSON object, no extra text.
+
+JSON structure:
+{"matchScore":72,"matchGrade":"B","verdict":"string","matchedKeywords":[],"missingKeywords":[],"matchedRequirements":[{"requirement":"string","evidence":"string"}],"missingRequirements":[{"requirement":"string","gap":"string","howToAddress":"string"}],"tailoringTips":[{"section":"string","tip":"string"}],"atsOptimization":{"score":65,"tips":[]}}
 
 RESUME:
-${resumeText}
+${truncatedResume}
 
 JOB DESCRIPTION:
-${jobDescription}
+${truncatedJob}
 
 JSON:`;
 
