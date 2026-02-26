@@ -1,9 +1,7 @@
-// Calls your local Express backend which proxies to Ollama
-// Make sure Ollama is running: ollama serve
-// And your model is pulled: ollama pull llama3.2
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export async function callAI(prompt, max_tokens = 1000) {
-  const response = await fetch('/api/ai/generate', {
+  const response = await fetch(`${API_URL}/api/ai/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt, max_tokens }),
