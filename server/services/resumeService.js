@@ -45,7 +45,6 @@ async function callGroq(prompt) {
 
 async function analyzeResume(resumeText) {
   const truncatedResume = resumeText.slice(0, 2000);
-
   const prompt = `Analyze this resume. Respond ONLY with a valid JSON object, no extra text.
 
 JSON structure:
@@ -55,14 +54,12 @@ RESUME:
 ${truncatedResume}
 
 JSON:`;
-
   return await callGroq(prompt);
 }
 
 async function matchJobDescription(resumeText, jobDescription) {
   const truncatedResume = resumeText.slice(0, 1500);
   const truncatedJob = jobDescription.slice(0, 1000);
-
   const prompt = `Compare this resume to the job description. Respond ONLY with a valid JSON object, no extra text.
 
 JSON structure:
@@ -75,16 +72,7 @@ JOB DESCRIPTION:
 ${truncatedJob}
 
 JSON:`;
-
   return await callGroq(prompt);
 }
 
 module.exports = { analyzeResume, matchJobDescription };
-```
-
-Now do these steps:
-
-**1. Add key to Render:**
-- Render → resume_analysis2-1 → Environment → Add:
-```
-GROQ_API_KEY = your-groq-api-key
