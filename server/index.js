@@ -9,7 +9,7 @@ const aiRoute = require('./routes/aiRoute');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Allowed Origins
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5189',
@@ -32,12 +32,23 @@ const allowedOrigins = [
 
 // Add production frontend URL if available
 if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL);
+  allowedOrigins.push(process.env.FRONTEND_URL.trim()); // .trim() removes accidental spaces
 }
 
+// CORS Middleware
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.error(`CORS blocked: ${origin}`);
+      callback(new Error('Not allowed by CORS: ' + origin));
+    }
+  },
+  credentials: true,
 }));
 
 app.use((req, res, next) => {
@@ -60,7 +71,11 @@ app.use('/api/ai', aiRoute);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    allowedOrigins, // helpful for debugging
+  });
 });
 
 // Global error handler
@@ -71,5 +86,6 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🌐 Allowed origins: ${allowedOrigins.join(', ')}`);
   console.log(`🤖 Using Ollama model: ${process.env.OLLAMA_MODEL || 'llama3.2'}`);
 });
