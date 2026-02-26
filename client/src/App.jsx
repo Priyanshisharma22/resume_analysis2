@@ -4,7 +4,7 @@ import HomePage from './pages/HomePage.jsx';
 import AnalyzePage from './pages/AnalyzePage.jsx';
 import ResultsPage from './pages/ResultsPage.jsx';
 import JobFinderPage from './pages/JobFinderPage.jsx';
-import AIToolsPage from './pages/AiToolspage.jsx';
+import AIToolsPage from './pages/AIToolspage.jsx';
 
 export default function App() {
   return (
