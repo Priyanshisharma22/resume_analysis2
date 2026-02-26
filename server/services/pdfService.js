@@ -1,4 +1,5 @@
-const pdfParse = require('pdf-parse');
+const pdf = require('pdf-parse');
+const pdfParse = pdf.default || pdf;
 
 /**
  * Extracts plain text from a PDF buffer
