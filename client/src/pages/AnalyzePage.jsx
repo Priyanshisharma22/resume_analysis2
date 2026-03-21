@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, X, ChevronRight, Loader, ArrowLeft, Briefcase } from 'lucide-react';
+import { Upload, FileText, X, ChevronRight, Loader, ArrowLeft, Briefcase, AlertCircle, CheckCircle } from 'lucide-react';
+import Header from '../components/Header';
 import { parsePdf, analyzeResume, matchJob } from '../utils/api.js';
 
 const TABS = ['upload', 'paste'];
@@ -60,23 +61,49 @@ export default function AnalyzePage() {
 
   return (
     <div style={s.page}>
+      <Header showCTA={false} />
+
       <div style={s.container}>
-        {/* Back */}
-        <button style={s.back} onClick={() => navigate('/')}>
-          <ArrowLeft size={16} /> Back
-        </button>
+        {/* Header Section */}
+        <div style={s.headerSection}>
+          <button style={s.backBtn} onClick={() => navigate('/')}>
+            <ArrowLeft size={18} strokeWidth={2} /> Back Home
+          </button>
 
-        <h1 style={s.title}>Analyze Your Resume</h1>
-        <p style={s.subtitle}>Upload a PDF or paste your resume text to get started.</p>
-
-        {/* Tab Toggle */}
-        <div style={s.tabs}>
-          {TABS.map(t => (
-            <button key={t} style={{ ...s.tab, ...(tab === t ? s.tabActive : {}) }} onClick={() => setTab(t)}>
-              {t === 'upload' ? <><Upload size={14} /> Upload PDF</> : <><FileText size={14} /> Paste Text</>}
-            </button>
-          ))}
+          <div style={s.titleBlock}>
+            <h1 style={s.title}>Analyze Your Resume</h1>
+            <p style={s.subtitle}>Get instant AI-powered insights to improve your resume and land your dream job</p>
+          </div>
         </div>
+
+        <div style={s.content}>
+          {/* Left Column - Upload/Paste */}
+          <div style={s.mainForm}>
+            {/* Tab Toggle */}
+            <div style={s.tabsContainer}>
+              {TABS.map(t => (
+                <button
+                  key={t}
+                  style={{
+                    ...s.tab,
+                    ...(tab === t ? s.tabActive : {}),
+                  }}
+                  onClick={() => { setTab(t); setError(''); }}
+                >
+                  {t === 'upload' ? (
+                    <>
+                      <Upload size={18} strokeWidth={2} />
+                      Upload PDF
+                    </>
+                  ) : (
+                    <>
+                      <FileText size={18} strokeWidth={2} />
+                      Paste Text
+                    </>
+                  )}
+                </button>
+              ))}
+            </div>
 
         {/* Upload Panel */}
         {tab === 'upload' && (
@@ -85,20 +112,24 @@ export default function AnalyzePage() {
               <input {...getInputProps()} />
               {pdfFile ? (
                 <div style={s.fileInfo}>
-                  <FileText size={28} color="var(--accent)" />
-                  <div>
+                  <div style={s.fileIcon}>
+                    <FileText size={28} color="white" strokeWidth={2} />
+                  </div>
+                  <div style={s.fileDetails}>
                     <div style={s.fileName}>{pdfFile.name}</div>
                     <div style={s.fileSize}>{(pdfFile.size / 1024).toFixed(1)} KB</div>
                   </div>
                   <button style={s.removeBtn} onClick={e => { e.stopPropagation(); setPdfFile(null); }}>
-                    <X size={16} />
+                    <X size={18} />
                   </button>
                 </div>
               ) : (
                 <div style={s.dropzoneContent}>
-                  <Upload size={32} color="var(--ink-faint)" />
-                  <p style={s.dropzoneText}>{isDragActive ? 'Drop it here!' : 'Drag & drop your PDF'}</p>
-                  <p style={s.dropzoneHint}>or click to browse — max 10MB</p>
+                  <div style={s.uploadIcon}>
+                    <Upload size={40} strokeWidth={1.5} />
+                  </div>
+                  <p style={s.dropzoneText}>{isDragActive ? 'Drop your PDF here' : 'Drag & drop your resume'}</p>
+                  <p style={s.dropzoneHint}>or click to browse your files (up to 10MB)</p>
                 </div>
               )}
             </div>
@@ -108,23 +139,26 @@ export default function AnalyzePage() {
         {/* Paste Panel */}
         {tab === 'paste' && (
           <div style={s.card}>
-            <textarea
-              style={s.textarea}
-              placeholder="Paste your full resume text here…"
-              value={resumeText}
-              onChange={e => setResumeText(e.target.value)}
-              rows={14}
-            />
-            <div style={s.charCount}>{resumeText.length} characters</div>
+            <div style={s.textareaWrapper}>
+              <label style={s.label}>Your Resume Text</label>
+              <textarea
+                style={s.textarea}
+                placeholder="Paste your full resume here…"
+                value={resumeText}
+                onChange={e => setResumeText(e.target.value)}
+                rows={12}
+              />
+              <div style={s.charCount}>{resumeText.length} characters (min: 50)</div>
+            </div>
           </div>
         )}
 
-        {/* Job Description Toggle */}
+        {/* Job Description Section */}
         <div style={s.card}>
           <div style={s.jobToggleRow}>
-            <div>
-              <div style={s.jobToggleTitle}><Briefcase size={16} /> Match with Job Description</div>
-              <div style={s.jobToggleSubtitle}>Get ATS score and tailoring tips for a specific role</div>
+            <div style={s.jobToggleContent}>
+              <div style={s.jobToggleTitle}><Briefcase size={18} strokeWidth={2} /> Compare with Job Description</div>
+              <div style={s.jobToggleSubtitle}>Get ATS score, keyword matching, and tailoring tips</div>
             </div>
             <label style={s.toggle}>
               <input type="checkbox" checked={includeJob} onChange={e => setIncludeJob(e.target.checked)} style={{ display: 'none' }} />
@@ -134,110 +168,328 @@ export default function AnalyzePage() {
             </label>
           </div>
           {includeJob && (
-            <textarea
-              style={{ ...s.textarea, marginTop: 16 }}
-              placeholder="Paste the full job description here…"
-              value={jobDescription}
-              onChange={e => setJobDescription(e.target.value)}
-              rows={8}
-            />
+            <div style={s.textareaWrapper}>
+              <label style={s.label}>Job Description</label>
+              <textarea
+                style={s.textarea}
+                placeholder="Paste the job description or job posting here…"
+                value={jobDescription}
+                onChange={e => setJobDescription(e.target.value)}
+                rows={8}
+              />
+              <div style={s.charCount}>{jobDescription.length} characters</div>
+            </div>
           )}
         </div>
 
-        {/* Error */}
-        {error && <div style={s.error}>{error}</div>}
+        {/* Error Alert */}
+        {error && (
+          <div style={s.error}>
+            <AlertCircle size={18} strokeWidth={2} />
+            <span>{error}</span>
+          </div>
+        )}
 
-        {/* Submit */}
-        <button style={s.submitBtn} onClick={handleSubmit} disabled={loading}>
+        {/* Submit Button */}
+        <button style={{...s.submitBtn, opacity: loading ? 0.7 : 1}} onClick={handleSubmit} disabled={loading}>
           {loading ? (
-            <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> {loadingStep}</>
+            <>
+              <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
+              {loadingStep}
+            </>
           ) : (
-            <>Analyze Resume <ChevronRight size={18} /></>
+            <>
+              Analyze Resume
+              <ChevronRight size={18} strokeWidth={2.5} />
+            </>
           )}
         </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 const s = {
-  page: { minHeight: '100vh', background: 'var(--paper)', padding: '40px 24px' },
-  container: { maxWidth: 680, margin: '0 auto' },
-  back: {
-    display: 'flex', alignItems: 'center', gap: 6,
-    background: 'none', border: 'none', cursor: 'pointer',
-    color: 'var(--ink-muted)', fontSize: 14, marginBottom: 32, padding: 0,
+  page: {
+    minHeight: '100vh',
+    background: 'var(--paper)',
   },
-  title: { fontFamily: 'var(--font-display)', fontSize: 36, marginBottom: 8, letterSpacing: '-0.02em' },
-  subtitle: { color: 'var(--ink-muted)', marginBottom: 32, fontSize: 15 },
-  tabs: {
-    display: 'flex', gap: 4, background: 'var(--paper-warm)',
-    borderRadius: 10, padding: 4, marginBottom: 20, width: 'fit-content',
+  container: {
+    maxWidth: '900px',
+    margin: '0 auto',
+    padding: 'var(--space-xl)',
+  },
+  headerSection: {
+    marginBottom: 'var(--space-3xl)',
+  },
+  backBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-sm)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: 'var(--ink-muted)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    marginBottom: 'var(--space-lg)',
+    padding: 0,
+    transition: 'color var(--transition-base) ease',
+  },
+  titleBlock: {
+    animation: 'fadeUp 0.5s ease',
+  },
+  title: {
+    fontSize: 'clamp(32px, 5vw, 44px)',
+    fontWeight: 700,
+    marginBottom: 'var(--space-md)',
+    color: 'var(--ink)',
+  },
+  subtitle: {
+    fontSize: 'var(--text-lg)',
+    color: 'var(--ink-muted)',
+    lineHeight: 1.6,
+  },
+  content: {
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: 'var(--space-xl)',
+  },
+  mainForm: {},
+  tabsContainer: {
+    display: 'flex',
+    gap: 'var(--space-sm)',
+    background: 'var(--paper-warm)',
+    borderRadius: 'var(--radius-lg)',
+    padding: 'var(--space-sm)',
+    marginBottom: 'var(--space-xl)',
   },
   tab: {
-    display: 'flex', alignItems: 'center', gap: 7,
-    padding: '10px 20px', borderRadius: 8, border: 'none',
-    cursor: 'pointer', fontSize: 14, fontWeight: 500,
-    background: 'transparent', color: 'var(--ink-muted)',
-    transition: 'all 0.2s', fontFamily: 'var(--font-body)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 'var(--space-sm)',
+    flex: 1,
+    padding: 'var(--space-md) var(--space-lg)',
+    borderRadius: 'var(--radius)',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 600,
+    background: 'transparent',
+    color: 'var(--ink-muted)',
+    transition: 'all var(--transition-base) ease',
+    fontFamily: 'var(--font-body)',
   },
-  tabActive: { background: 'var(--paper-card)', color: 'var(--ink)', boxShadow: 'var(--shadow-sm)' },
-  card: {
-    background: 'var(--paper-card)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius)', padding: 24, marginBottom: 16,
+  tabActive: {
+    background: 'var(--paper-card)',
+    color: 'var(--accent)',
     boxShadow: 'var(--shadow-sm)',
   },
-  dropzone: {
-    border: '2px dashed var(--border-strong)', borderRadius: 10,
-    padding: 48, cursor: 'pointer', transition: 'all 0.2s',
-    textAlign: 'center',
+  card: {
+    background: 'var(--paper-card)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-lg)',
+    padding: 'var(--space-xl)',
+    boxShadow: 'var(--shadow-sm)',
+    transition: 'all var(--transition-base) ease',
   },
-  dropzoneActive: { borderColor: 'var(--accent)', background: 'var(--accent-light)' },
-  dropzoneFilled: { borderStyle: 'solid', borderColor: 'var(--accent)' },
-  dropzoneContent: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 },
-  dropzoneText: { fontWeight: 500, color: 'var(--ink)', fontSize: 16 },
-  dropzoneHint: { fontSize: 13, color: 'var(--ink-faint)' },
-  fileInfo: { display: 'flex', alignItems: 'center', gap: 16 },
-  fileName: { fontWeight: 600, fontSize: 15 },
-  fileSize: { fontSize: 12, color: 'var(--ink-faint)' },
+  dropzone: {
+    border: '2px dashed var(--border-strong)',
+    borderRadius: 'var(--radius-lg)',
+    padding: 'var(--space-3xl) var(--space-xl)',
+    cursor: 'pointer',
+    transition: 'all var(--transition-base) ease',
+    textAlign: 'center',
+    background: 'var(--paper)',
+  },
+  dropzoneActive: {
+    borderColor: 'var(--accent)',
+    background: 'rgba(217, 70, 239, 0.05)',
+  },
+  dropzoneFilled: {
+    borderStyle: 'solid',
+    borderColor: 'var(--accent)',
+    background: 'rgba(217, 70, 239, 0.02)',
+  },
+  dropzoneContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 'var(--space-lg)',
+  },
+  uploadIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 'var(--radius-lg)',
+    background: 'rgba(217, 70, 239, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'var(--accent)',
+  },
+  dropzoneText: {
+    fontWeight: 600,
+    color: 'var(--ink)',
+    fontSize: 'var(--text-lg)',
+  },
+  dropzoneHint: {
+    fontSize: 'var(--text-sm)',
+    color: 'var(--ink-faint)',
+  },
+  fileIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 'var(--radius-lg)',
+    background: 'linear-gradient(135deg, #d946ef 0%, #a3185f 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  fileInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-lg)',
+  },
+  fileDetails: {
+    flex: 1,
+    textAlign: 'left',
+  },
+  fileName: {
+    fontWeight: 600,
+    fontSize: 'var(--text-base)',
+    color: 'var(--ink)',
+    marginBottom: '2px',
+  },
+  fileSize: {
+    fontSize: 'var(--text-sm)',
+    color: 'var(--ink-faint)',
+  },
   removeBtn: {
-    marginLeft: 'auto', background: 'var(--paper-warm)', border: 'none',
-    borderRadius: 6, padding: 6, cursor: 'pointer', display: 'flex',
+    background: 'var(--paper-warm)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    padding: 'var(--space-sm)',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     color: 'var(--ink-muted)',
+    transition: 'all var(--transition-base) ease',
+    flexShrink: 0,
+  },
+  textareaWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--space-md)',
+  },
+  label: {
+    fontSize: 'var(--text-sm)',
+    fontWeight: 600,
+    color: 'var(--ink)',
   },
   textarea: {
-    width: '100%', border: '1px solid var(--border)', borderRadius: 8,
-    padding: '14px 16px', fontSize: 14, fontFamily: 'var(--font-body)',
-    color: 'var(--ink)', background: 'var(--paper)', resize: 'vertical',
-    outline: 'none', lineHeight: 1.6, transition: 'border-color 0.2s',
+    width: '100%',
+    border: '1.5px solid var(--border)',
+    borderRadius: 'var(--radius-lg)',
+    padding: 'var(--space-lg)',
+    fontSize: 'var(--text-base)',
+    fontFamily: 'var(--font-body)',
+    color: 'var(--ink)',
+    background: 'var(--paper)',
+    resize: 'vertical',
+    minHeight: '180px',
+    lineHeight: '1.6',
+    transition: 'border-color var(--transition-base) ease',
   },
-  charCount: { textAlign: 'right', fontSize: 12, color: 'var(--ink-faint)', marginTop: 8 },
-  jobToggleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-  jobToggleTitle: { display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, marginBottom: 4 },
-  jobToggleSubtitle: { fontSize: 13, color: 'var(--ink-muted)' },
-  toggle: { cursor: 'pointer' },
+  charCount: {
+    textAlign: 'right',
+    fontSize: 'var(--text-xs)',
+    color: 'var(--ink-faint)',
+  },
+  jobToggleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 'var(--space-lg)',
+  },
+  jobToggleContent: {
+    flex: 1,
+  },
+  jobToggleTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-sm)',
+    fontWeight: 600,
+    fontSize: 'var(--text-base)',
+    color: 'var(--ink)',
+    marginBottom: 'var(--space-xs)',
+  },
+  jobToggleSubtitle: {
+    fontSize: 'var(--text-sm)',
+    color: 'var(--ink-muted)',
+  },
+  toggle: {
+    cursor: 'pointer',
+    flexShrink: 0,
+  },
   toggleTrack: {
-    width: 44, height: 24, borderRadius: 12, background: 'var(--border-strong)',
-    position: 'relative', transition: 'background 0.2s',
+    width: 52,
+    height: 28,
+    borderRadius: 100,
+    background: 'var(--border-strong)',
+    position: 'relative',
+    transition: 'background var(--transition-base) ease',
   },
-  toggleTrackOn: { background: 'var(--accent)' },
+  toggleTrackOn: {
+    background: 'var(--accent)',
+  },
   toggleThumb: {
-    position: 'absolute', top: 3, left: 3, width: 18, height: 18,
-    borderRadius: '50%', background: 'white',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'left 0.2s',
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    width: 22,
+    height: 22,
+    borderRadius: '50%',
+    background: 'white',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+    transition: 'left var(--transition-base) ease',
   },
-  toggleThumbOn: { left: 23 },
+  toggleThumbOn: {
+    left: 'calc(100% - 25px)',
+  },
   error: {
-    background: '#fef2f0', border: '1px solid var(--accent-light)',
-    color: 'var(--accent-dark)', borderRadius: 8, padding: '12px 16px',
-    fontSize: 14, marginBottom: 16,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-md)',
+    background: 'var(--error-light)',
+    border: '1px solid var(--error)',
+    color: 'var(--error)',
+    borderRadius: 'var(--radius-lg)',
+    padding: 'var(--space-lg)',
+    fontSize: 'var(--text-base)',
+    animation: 'slideInLeft 0.3s ease',
   },
   submitBtn: {
-    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-    padding: '16px 32px', background: 'var(--accent)', color: 'white',
-    border: 'none', borderRadius: 12, cursor: 'pointer',
-    fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 600,
-    boxShadow: '0 4px 20px rgba(200,75,47,0.3)',
-    transition: 'opacity 0.2s',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 'var(--space-sm)',
+    padding: 'var(--space-lg) var(--space-2xl)',
+    background: 'linear-gradient(135deg, #d946ef 0%, #a3185f 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: 'var(--radius-lg)',
+    cursor: 'pointer',
+    fontFamily: 'var(--font-body)',
+    fontSize: 'var(--text-base)',
+    fontWeight: 700,
+    boxShadow: '0 8px 32px rgba(217, 70, 239, 0.4)',
+    transition: 'all var(--transition-base) ease',
+    animation: 'fadeUp 0.5s 0.3s ease both',
   },
 };

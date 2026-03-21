@@ -13,7 +13,7 @@ export async function callAI(prompt, max_tokens = 1000) {
     throw new Error('Network error: Could not reach the server');
   }
 
-  // Read as text first (safe — avoids "Unexpected end of JSON input")
+  
   const rawText = await response.text();
 
   if (!rawText || rawText.trim() === '') {
